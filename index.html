@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Who's My Friend?</title>
+  <style>
+    /* General Styling */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      text-align: center;
+    }
+
+    select, button {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    /* Style for the reset button */
+    #resetButton {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background-color: #f44336;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 15px;
+      cursor: pointer;
+      display: none; /* Hidden by default */
+    }
+
+    #resetButton:hover {
+      background-color: #d32f2f;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script>
+    // Initialize EmailJS with your user ID
+    (function() {
+      emailjs.init("NtMB0PGkMJwfrxxyu"); // Replace with your EmailJS user ID
+    })();
+
+    const initialParticipants = [
+      "Seena", "Alias", "William", "Bini", "Dennis",
+      "Steve", "Liya", "Edwin", "Eldhose", "Susmitha"
+    ];
+
+    const familyRelations = {
+      Seena: ["Alias", "William"],
+      Alias: ["Seena", "William"],
+      William: ["Seena", "Alias"],
+      Bini: ["Dennis", "Steve"],
+      Dennis: ["Bini", "Steve"],
+      Steve: ["Bini", "Dennis"],
+      Liya: ["Edwin", "Eldhose"],
+      Edwin: ["Liya", "Eldhose"],
+      Eldhose: ["Liya", "Edwin"],
+      Susmitha: []
+    };
+
+    let participantsWhoHavePicked = new Set();
+    let pickedParticipants = new Set();
+
+    // Populate the dropdown menu dynamically
+    function populateDropdown() {
+      const dropdown = document.getElementById("participantSelect");
+      dropdown.innerHTML = "<option value='' disabled selected>Select your name</option>";
+
+      initialParticipants.forEach(name => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        dropdown.appendChild(option);
+      });
+    }
+
+    // Randomly select a valid choice for a participant
+    function makePick() {
+      const selectedParticipant = document.getElementById("participantSelect").value;
+
+      if (!selectedParticipant) {
+        document.getElementById("result").textContent = "Please select a name first!";
+        return;
+      }
+
+      if (participantsWhoHavePicked.has(selectedParticipant)) {
+        document.getElementById("result").textContent = "You have already picked!";
+        return;
+      }
+
+      const invalidChoices = familyRelations[selectedParticipant];
+      const validChoices = initialParticipants.filter(
+        participant => !invalidChoices.includes(participant) &&
+        participant !== selectedParticipant && !pickedParticipants.has(participant)
+      );
+
+      if (validChoices.length === 0) {
+        document.getElementById("result").textContent = "No valid options left to pick!";
+        return;
+      }
+
+      const randomChoice = validChoices[Math.floor(Math.random() * validChoices.length)];
+
+      participantsWhoHavePicked.add(selectedParticipant);
+      pickedParticipants.add(randomChoice);
+
+      document.getElementById("result").textContent = `${selectedParticipant} picked: ${randomChoice}`;
+      disableParticipant(selectedParticipant);
+
+      // Send the result via EmailJS
+      sendEmail(selectedParticipant, randomChoice);
+    }
+
+    // Disable the participant in the dropdown after they make a pick
+    function disableParticipant(participant) {
+      const dropdown = document.getElementById("participantSelect");
+      const options = dropdown.options;
+
+      for (let i = 0; i < options.length; i++) {
+        if (options[i].value === participant) {
+          options[i].disabled = true;
+          break;
+        }
+      }
+    }
+
+    // Send email using EmailJS
+    function sendEmail(picker, picked) {
+      const templateParams = {
+        picker_name: picker,
+        picked_name: picked
+      };
+
+      emailjs.send("service_x2sp37r", "template_n01nq94", templateParams)
+        .then((response) => {
+          console.log("Email sent successfully!", response);
+        })
+        .catch((error) => {
+          console.error("Failed to send email:", error);
+        });
+    }
+
+    // Reset all data
+    function resetAll() {
+      participantsWhoHavePicked.clear();
+      pickedParticipants.clear();
+      document.getElementById("result").textContent = "Reset complete.";
+      populateDropdown(); // Reset dropdown
+    }
+
+    // Show reset button only if Susmitha is selected
+    function checkResetVisibility() {
+      const resetButton = document.getElementById("resetButton");
+      const selectedParticipant = document.getElementById("participantSelect").value;
+
+      if (selectedParticipant === "Susmitha") {
+        resetButton.style.display = "block";
+      } else {
+        resetButton.style.display = "none";
+      }
+    }
+
+    // Initial UI rendering
+    document.addEventListener("DOMContentLoaded", () => {
+      populateDropdown();
+    });
+  </script>
+</head>
+<body>
+  <h1>Who's My Friend?</h1>
+
+  <!-- Dropdown to select the name -->
+  <label for="participantSelect">Choose Your Name:</label>
+  <select id="participantSelect" onchange="checkResetVisibility()"></select>
+  <button onclick="makePick()">Pick Random</button>
+
+  <div class="result" id="result"></div>
+
+  <!-- Reset button shown only for Susmitha -->
+  <button id="resetButton" onclick="resetAll()">Reset</button>
+</body>
+</html>
