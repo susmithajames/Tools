@@ -11,7 +11,7 @@
       margin: 0;
       padding: 0;
       text-align: center;
-      background: url('https://github.com/susmithajames/Tools/blob/main/Christmas-Gift-PNG-Image-Background.png') no-repeat center center fixed;
+      background: url('/mnt/data/image.png') no-repeat center center fixed;
       background-size: cover;
       color: white;
       box-sizing: border-box;
@@ -164,6 +164,17 @@
         });
     }
 
+    // Reset the application state
+    function resetApp() {
+      participantsWhoHavePicked.clear();
+      pickedParticipants.clear();
+      populateDropdown();  // Re-populate the dropdown with all names
+      document.getElementById("result").textContent = '';  // Clear the result message
+    }
+
+    // Enable reset through the console
+    window.resetApp = resetApp;
+
     // Initial UI rendering
     document.addEventListener("DOMContentLoaded", () => {
       populateDropdown();
@@ -179,6 +190,9 @@
   <button onclick="makePick()">Pick Random</button>
 
   <div class="result" id="result"></div>
+
+  <!-- Reset Button for UI -->
+  <button onclick="resetApp()">Reset</button>
 
 </body>
 </html>
