@@ -107,6 +107,7 @@
         const picksData = snapshot.val();
         if (picksData) {
           participantsWhoHavePicked = new Set(Object.keys(picksData));
+          pickedParticipants = new Set(Object.values(picksData));
         }
         populateDropdown();
       });
@@ -127,8 +128,10 @@
         const option = document.createElement("option");
         option.value = name;
         option.textContent = name;
+
+        // Disable participants who have already made a pick
         if (participantsWhoHavePicked.has(name)) {
-          option.disabled = true; // Disable participants who have picked
+          option.disabled = true;
         }
         dropdown.appendChild(option);
       });
