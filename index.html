@@ -5,68 +5,82 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Who's My Friend?</title>
   <style>
-    /* General Styling */
     body {
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
       text-align: center;
-      background-color: green; /* Set background color to green */
+      background-color: green;
       color: white;
       box-sizing: border-box;
     }
-
     h1 {
       font-size: 3em;
       text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.7);
       margin-top: 20px;
     }
-
-    label, select, button {
+    label, select, button, input {
       font-size: 18px;
       padding: 10px 20px;
       margin: 10px;
       border-radius: 8px;
       border: none;
     }
-
     label {
       color: #ffeb3b;
     }
-
-    select, button {
+    select, button, input {
       background-color: rgba(255, 255, 255, 0.7);
       color: #333;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
-
     button {
       cursor: pointer;
       font-weight: bold;
     }
-
     button:hover {
       background-color: #f44336;
     }
-
     .result {
       font-size: 1.5em;
       margin-top: 20px;
       font-weight: bold;
       text-shadow: 3px 3px 10px rgba(0, 0, 0, 0.5);
     }
-
-    /* Hide Reset Button */
-    #resetButton {
-      display: none; /* Hides the reset button completely */
-    }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-  <script>
-    // Initialize EmailJS with your user ID
-    (function() {
-      emailjs.init("NtMB0PGkMJwfrxxyu"); // Replace with your EmailJS user ID
-    })();
+</head>
+<body>
+  <h1>Who's My Friend?</h1>
+
+  <!-- Dropdown to select the name -->
+  <label for="participantSelect">Choose Your Name:</label>
+  <select id="participantSelect"></select>
+
+  <!-- Button to trigger the random selection -->
+  <button id="pickButton">Pick Random</button>
+
+  <div class="result" id="result"></div>
+
+  <!-- Firebase configuration -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.9.3/firebase-app.js";
+    import { getDatabase, ref, set, get, child, remove } from "https://www.gstatic.com/firebasejs/9.9.3/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCSMw-S8pmFYyIA3hAZuQm_QIBSMm7BkLk",
+      authDomain: "friend-226eb.firebaseapp.com",
+      databaseURL: "https://friend-226eb-default-rtdb.firebaseio.com",
+      projectId: "friend-226eb",
+      storageBucket: "friend-226eb.appspot.com",
+      messagingSenderId: "815245344615",
+      appId: "1:815245344615:web:3fe76fc2276b6b4a8fb9c2",
+      measurementId: "G-TWMPYZSRPX"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
 
     const initialParticipants = [
       "Seena", "Alias", "William", "Bini", "Dennis",
@@ -98,14 +112,28 @@
         const option = document.createElement("option");
         option.value = name;
         option.textContent = name;
+        if (participantsWhoHavePicked.has(name)) {
+          option.disabled = true;
+        }
         dropdown.appendChild(option);
+      });
+    }
+
+    // Send email using EmailJS
+    function sendEmail(picker, picked) {
+      emailjs.send("service_x2sp37r", "template_n01nq94", {
+        picker_name: picker,
+        picked_name: picked
+      }).then(function(response) {
+        console.log("Email sent successfully", response);
+      }, function(error) {
+        console.error("Email sending failed", error);
       });
     }
 
     // Randomly select a valid choice for a participant
     function makePick() {
       const selectedParticipant = document.getElementById("participantSelect").value;
-
       if (!selectedParticipant) {
         document.getElementById("result").textContent = "Please select a name first!";
         return;
@@ -135,7 +163,10 @@
       document.getElementById("result").textContent = `${selectedParticipant} picked: ${randomChoice}`;
       disableParticipant(selectedParticipant);
 
-      // Send the result via EmailJS
+      // Save pick to Firebase
+      savePickToFirebase(selectedParticipant, randomChoice);
+
+      // Send email after making the pick
       sendEmail(selectedParticipant, randomChoice);
     }
 
@@ -143,7 +174,6 @@
     function disableParticipant(participant) {
       const dropdown = document.getElementById("participantSelect");
       const options = dropdown.options;
-
       for (let i = 0; i < options.length; i++) {
         if (options[i].value === participant) {
           options[i].disabled = true;
@@ -152,51 +182,59 @@
       }
     }
 
-    // Send email using EmailJS
-    function sendEmail(picker, picked) {
-      const templateParams = {
-        picker_name: picker,
-        picked_name: picked
-      };
-
-      emailjs.send("service_x2sp37r", "template_n01nq94", templateParams)
-        .then((response) => {
-          console.log("Email sent successfully!", response);
-        })
-        .catch((error) => {
-          console.error("Failed to send email:", error);
-        });
+    // Save pick state to Firebase
+    function savePickToFirebase(picker, picked) {
+      const pickRef = ref(database, 'picks/' + picker);
+      set(pickRef, {
+        picker: picker,
+        picked: picked,
+        timestamp: Date.now()
+      }).catch((error) => {
+        console.error('Error saving pick to Firebase:', error);
+      });
     }
 
-    // Reset the application state
-    function resetApp() {
+    // Load pick state from Firebase
+    function loadPicksFromFirebase() {
+      const dbRef = ref(database);
+      get(child(dbRef, "picks")).then((snapshot) => {
+        if (snapshot.exists()) {
+          const picksData = snapshot.val();
+          participantsWhoHavePicked = new Set(Object.keys(picksData));
+          pickedParticipants = new Set(Object.values(picksData).map(pick => pick.picked));
+          console.log("Picks loaded from Firebase:", picksData);
+        }
+        populateDropdown();
+      }).catch((error) => {
+        console.error("Error reading from Firebase Database:", error);
+      });
+    }
+
+    // Global reset function, accessible from the console
+    window.resetGame = function() {
       participantsWhoHavePicked.clear();
       pickedParticipants.clear();
-      populateDropdown();  // Re-populate the dropdown with all names
-      document.getElementById("result").textContent = '';  // Clear the result message
-    }
+      document.getElementById("result").textContent = "";
 
-    // Enable reset through the console
-    window.resetApp = resetApp;
+      const pickRef = ref(database, "picks");
+      remove(pickRef).then(() => {
+        console.log("All picks reset in Firebase.");
+      }).catch((error) => {
+        console.error("Error resetting Firebase data:", error);
+      });
+
+      populateDropdown();
+      console.log("Game reset successful.");
+    };
 
     // Initial UI rendering
     document.addEventListener("DOMContentLoaded", () => {
-      populateDropdown();
+      loadPicksFromFirebase(); // Load picks from Firebase when the page loads
+      emailjs.init("NtMB0PGkMJwfrxxyu"); // Initialize EmailJS with your user ID
     });
+
+    // Button event listener for the pick button
+    document.getElementById("pickButton").addEventListener("click", makePick);
   </script>
-</head>
-<body>
-  <h1>Who's My Friend?</h1>
-
-  <!-- Dropdown to select the name -->
-  <label for="participantSelect">Choose Your Name:</label>
-  <select id="participantSelect"></select>
-  <button onclick="makePick()">Pick Random</button>
-
-  <div class="result" id="result"></div>
-
-  <!-- Reset Button (Hidden) -->
-  <button id="resetButton" onclick="resetApp()">Reset</button>
-
 </body>
 </html>
