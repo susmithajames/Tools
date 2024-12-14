@@ -65,14 +65,14 @@
   <script>
     // Firebase configuration
     const firebaseConfig = {
-      apiKey: "AIzaSyCSMw-S8pmFYyIA3hAZuQm_QIBSMm7BkLk",
-      authDomain: "friend-226eb.firebaseapp.com",
-      databaseURL: "https://friend-226eb.firebaseio.com",
-      projectId: "friend-226eb",
-      storageBucket: "friend-226eb.appspot.com",
-      messagingSenderId: "815245344615",
-      appId: "1:815245344615:web:3fe76fc2276b6b4a8fb9c2",
-      measurementId: "G-TWMPYZSRPX"
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID",
+      measurementId: "YOUR_MEASUREMENT_ID"
     };
 
     // Initialize Firebase
@@ -172,6 +172,9 @@
 
       // Save pick to Firebase
       savePickToFirebase(selectedParticipant, randomChoice);
+
+      // Send the result via EmailJS
+      sendEmail(selectedParticipant, randomChoice);
     }
 
     // Disable the participant in the dropdown after they make a pick
@@ -185,6 +188,22 @@
           break;
         }
       }
+    }
+
+    // Send email using EmailJS
+    function sendEmail(picker, picked) {
+      const templateParams = {
+        picker_name: picker,
+        picked_name: picked
+      };
+
+      emailjs.send("service_x2sp37r", "template_n01nq94", templateParams)
+        .then((response) => {
+          console.log("Email sent successfully!", response);
+        })
+        .catch((error) => {
+          console.error("Failed to send email:", error);
+        });
     }
 
     // Reset the application state
@@ -222,7 +241,6 @@
 
   <div class="result" id="result"></div>
 
-  <!-- The reset button is hidden by default but accessible via console -->
   <button id="resetButton" onclick="resetApp()">Reset</button>
 
 </body>
