@@ -11,9 +11,8 @@
       margin: 0;
       padding: 0;
       text-align: center;
-      background: url('') no-repeat center center fixed;
-      background-size: cover;
-      color: beige;
+      background-color: beige; /* Set background to beige */
+      color: white;
       box-sizing: border-box;
     }
 
@@ -55,6 +54,11 @@
       margin-top: 20px;
       font-weight: bold;
       text-shadow: 3px 3px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Hide Reset Button */
+    #resetButton {
+      display: none; /* Hides the reset button */
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
@@ -191,8 +195,8 @@
 
   <div class="result" id="result"></div>
 
-  <!-- Reset Button for UI -->
-  <button onclick="resetApp()">Reset</button>
+  <!-- Reset Button (Hidden) -->
+  <button id="resetButton" onclick="resetApp()">Reset</button>
 
 </body>
 </html>
