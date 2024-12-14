@@ -208,12 +208,19 @@
 
     // Reset the application state
     function resetApp() {
+      // Reset the sets
       participantsWhoHavePicked.clear();
       pickedParticipants.clear();
+
+      // Reset Firebase
       const picksRef = database.ref('picks');
       picksRef.remove(); // Remove picks from Firebase
-      populateDropdown();  // Re-populate the dropdown with all names
-      document.getElementById("result").textContent = '';  // Clear the result message
+
+      // Re-populate the dropdown with all names
+      populateDropdown();
+
+      // Clear the result message
+      document.getElementById("result").textContent = '';
     }
 
     // Enable reset through the console
