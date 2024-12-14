@@ -172,9 +172,6 @@
 
       // Save pick to Firebase
       savePickToFirebase(selectedParticipant, randomChoice);
-
-      // Send the result via EmailJS
-      sendEmail(selectedParticipant, randomChoice);
     }
 
     // Disable the participant in the dropdown after they make a pick
@@ -188,22 +185,6 @@
           break;
         }
       }
-    }
-
-    // Send email using EmailJS
-    function sendEmail(picker, picked) {
-      const templateParams = {
-        picker_name: picker,
-        picked_name: picked
-      };
-
-      emailjs.send("service_x2sp37r", "template_n01nq94", templateParams)
-        .then((response) => {
-          console.log("Email sent successfully!", response);
-        })
-        .catch((error) => {
-          console.error("Failed to send email:", error);
-        });
     }
 
     // Reset the application state
@@ -241,6 +222,7 @@
 
   <div class="result" id="result"></div>
 
+  <!-- The reset button is hidden by default but accessible via console -->
   <button id="resetButton" onclick="resetApp()">Reset</button>
 
 </body>
