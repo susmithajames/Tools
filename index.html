@@ -5,12 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Who's My Friend?</title>
   <style>
+    /* General Styling */
     body {
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
       text-align: center;
-      background-color: green;
+      background-color: green; /* Set background color to green */
       color: white;
       box-sizing: border-box;
     }
@@ -55,29 +56,17 @@
       text-shadow: 3px 3px 10px rgba(0, 0, 0, 0.5);
     }
 
+    /* Hide Reset Button */
     #resetButton {
-      display: none;
+      display: none; /* Hides the reset button completely */
     }
   </style>
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.9.3/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.9.3/firebase-database.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script>
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID",
-      measurementId: "YOUR_MEASUREMENT_ID"
-    };
-
-    // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const database = firebase.database(app);
+    // Initialize EmailJS with your user ID
+    (function() {
+      emailjs.init("NtMB0PGkMJwfrxxyu"); // Replace with your EmailJS user ID
+    })();
 
     const initialParticipants = [
       "Seena", "Alias", "William", "Bini", "Dennis",
@@ -100,26 +89,7 @@
     let participantsWhoHavePicked = new Set();
     let pickedParticipants = new Set();
 
-    // Load picks from Firebase
-    function loadPicksFromFirebase() {
-      const picksRef = database.ref('picks');
-      picksRef.once('value', (snapshot) => {
-        const picksData = snapshot.val();
-        if (picksData) {
-          participantsWhoHavePicked = new Set(Object.keys(picksData));
-          pickedParticipants = new Set(Object.values(picksData));
-        }
-        populateDropdown();
-      });
-    }
-
-    // Save pick to Firebase
-    function savePickToFirebase(picker, picked) {
-      const picksRef = database.ref('picks');
-      picksRef.child(picker).set(picked);
-    }
-
-    // Populate the dropdown menu
+    // Populate the dropdown menu dynamically
     function populateDropdown() {
       const dropdown = document.getElementById("participantSelect");
       dropdown.innerHTML = "<option value='' disabled selected>Select your name</option>";
@@ -128,16 +98,11 @@
         const option = document.createElement("option");
         option.value = name;
         option.textContent = name;
-
-        // Disable participants who have already made a pick
-        if (participantsWhoHavePicked.has(name)) {
-          option.disabled = true;
-        }
         dropdown.appendChild(option);
       });
     }
 
-    // Handle the pick action
+    // Randomly select a valid choice for a participant
     function makePick() {
       const selectedParticipant = document.getElementById("participantSelect").value;
 
@@ -169,9 +134,6 @@
 
       document.getElementById("result").textContent = `${selectedParticipant} picked: ${randomChoice}`;
       disableParticipant(selectedParticipant);
-
-      // Save pick to Firebase
-      savePickToFirebase(selectedParticipant, randomChoice);
 
       // Send the result via EmailJS
       sendEmail(selectedParticipant, randomChoice);
@@ -208,19 +170,10 @@
 
     // Reset the application state
     function resetApp() {
-      // Reset the sets
       participantsWhoHavePicked.clear();
       pickedParticipants.clear();
-
-      // Reset Firebase
-      const picksRef = database.ref('picks');
-      picksRef.remove(); // Remove picks from Firebase
-
-      // Re-populate the dropdown with all names
-      populateDropdown();
-
-      // Clear the result message
-      document.getElementById("result").textContent = '';
+      populateDropdown();  // Re-populate the dropdown with all names
+      document.getElementById("result").textContent = '';  // Clear the result message
     }
 
     // Enable reset through the console
@@ -228,19 +181,21 @@
 
     // Initial UI rendering
     document.addEventListener("DOMContentLoaded", () => {
-      loadPicksFromFirebase(); // Load the picks from Firebase
+      populateDropdown();
     });
   </script>
 </head>
 <body>
   <h1>Who's My Friend?</h1>
 
+  <!-- Dropdown to select the name -->
   <label for="participantSelect">Choose Your Name:</label>
   <select id="participantSelect"></select>
   <button onclick="makePick()">Pick Random</button>
 
   <div class="result" id="result"></div>
 
+  <!-- Reset Button (Hidden) -->
   <button id="resetButton" onclick="resetApp()">Reset</button>
 
 </body>
